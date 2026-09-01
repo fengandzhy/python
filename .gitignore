@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtualenv（本仓库纯标准库，不需要，但万一建了别提交）
+.venv/
+
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
