@@ -1,8 +1,8 @@
-"""字符串：f-string、切片、docstring、注释。
+"""注释 vs docstring：看着都是说明，性质完全不同。
 
-    python3 01_strings.py          # 或 uv run python 01_strings.py
+    python3 strings/strings-demo03.py
 
-这些都是你在 demos/ 里实际撞到过的，每条标了出处。
+拆自 01_strings.py 的第 ③ 节。
 """
 
 # ═════════════════════════════════════════════════════════════════════
