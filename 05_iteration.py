@@ -78,6 +78,83 @@ print()
 print("  enumerate 也是同一个套路：")
 for i, name in enumerate(["a", "b", "c"], start=1):
     print(f"    i={i}  name={name!r}")
+print()
+print("  ─── 解包只认【位置】，不认类型 ───────────────────────")
+print("  for fn, label in [...] 里，Python 只保证「数量对得上就拆」，")
+print("  左边到底该是函数还是字符串，是你自己的约定，它不检查。")
+
+
+def f1():
+    "单引号也算"
+
+
+# ── ①个数不对 → 立刻 ValueError，最容易发现 ─────────────────────
+print()
+print("  ① 元组个数不对 → 立刻 ValueError（还没用就炸）")
+
+for bad in [[(f1, "多一个", "溢出")], [(f1,)]]:
+    try:
+        for fn, label in bad:
+            pass
+    except ValueError as e:
+        print(f"      {bad[0]!r:34} → ValueError: {e}")
+
+# ── ②左右写反、类型不兼容 → 用到那一刻才 TypeError ───────────────
+print()
+print("  ② 左右写反，用的时候类型不兼容 → TypeError（解包本身不报错）")
+
+for fn, label in [("不在第一行", f1)]:            # 反了：fn 是字符串，label 是函数
+    print(f"      解包成功: fn={fn!r}  label={label.__name__}  ← Python 一声不吭")
+    try:
+        print(f"      {label:14} __doc__ = {fn.__doc__!r}")
+    except TypeError as e:
+        print(f"      用的时候才炸 → TypeError: {e}")
+        print("      （{label:14} 想给函数补空格补到 14 位，函数不支持格式化）")
+
+# ── ③左右写反、类型碰巧都能用 → 不报错，静默输出错东西 ────────────
+print()
+print("  ③ 左右写反，类型碰巧都能用 → 不报错，静默输出垃圾（最坑）")
+
+for fn, label in [("单引号", "单引号也算")]:       # 两个都是字符串
+    got = fn.__doc__
+    print(f"      {label:14} __doc__ = {got[:38]!r}…")
+    print("      ↑ 没有任何报错。因为字符串也有 .__doc__（继承自 str 类），")
+    print("        读到的是 str 这个类的官方文档，不是你想要的东西。")
+
+# ── ④三个元组类型各不一样 → 完全合法 ───────────────────────────
+print()
+print("  ④ 每个元组类型各不相同 → 完全合法，Python 不管")
+
+for a, b in [(f1, "字符串"), (123, [1, 2]), ({"k": 1}, None)]:
+    print(f"      a={a!r:26} b={b!r}")
+print("      数量对得上就行，类型爱是什么是什么。")
+
+# ── 想让 Python 帮你把关 ──────────────────────────────────────
+print()
+print("  ─── 想让写反了能被发现，两个办法 ───────────────────────")
+
+# 办法1：用字典，靠 key 取值而不是靠位置
+print("  办法1 用字典（靠名字取，写反了立刻看得出）：")
+for case in [{"fn": f1, "label": "单引号"}]:
+    print(f"      {case['label']:14} __doc__ = {case['fn'].__doc__!r}")
+
+# 办法2：用 NamedTuple，既有名字又有类型标注，IDE 会画红线
+from typing import Callable, NamedTuple
+
+
+class Case(NamedTuple):
+    fn: Callable
+    label: str
+
+
+print("  办法2 用 NamedTuple（带类型标注，IDE / mypy 会提前报）：")
+for c in [Case(f1, "单引号")]:
+    print(f"      {c.label:14} __doc__ = {c.fn.__doc__!r}")
+
+print()
+print("  根源：Python 是运行时才检查类型的。")
+print("  「我以为它是 X」和「它运行时真是 X」之间那道缝，就是 bug 的主要来源")
+print("  —— 跟 01_strings.py 里 __doc__ 是 None 却拿去切片，是同一类问题。")
 
 # ══════════════════════════════════════════════════════════════════════
 print()
