@@ -158,3 +158,87 @@ print()
 print("  真的 @tool 做的事一模一样：读函数名、docstring、类型注解，")
 print("  生成 JSON Schema，把函数换成 StructuredTool 对象。")
 print("  所以 @tool 之后不能再 get_weather('北京')，必须 .invoke({'city': '北京'})。")
+
+# ══════════════════════════════════════════════════════════════════════
+print()
+print("═" * 62)
+print("⑤ __str__ vs __repr__ —— 同一个对象，两套显示")
+print("═" * 62)
+# 出处：print(chunk) / print(messages) 时，AIMessage、ToolMessage 显示成什么样，
+#      取决于 langchain 给它们写的 __repr__。
+
+# str() 和 repr() 都是「把对象变成文字」，区别在服务对象：
+#   str()  给最终用户看 —— 好读
+#   repr() 给程序员看   —— 精确，照着能敲回代码里
+# 它们本身没有魔法，只是去调对象身上的 __str__ / __repr__。
+
+
+class City:
+    def __init__(self, name, temp):
+        self.name, self.temp = name, temp
+
+    def __str__(self):                     # str() / print() / {x} 走这个
+        return f"{self.name} {self.temp}度"
+
+    def __repr__(self):                    # repr() / {x!r} 走这个
+        return f"City(name={self.name!r}, temp={self.temp})"
+
+
+c = City("北京", 25)
+print(f"  str(c)          = {str(c)}")
+print(f"  repr(c)         = {repr(c)}")
+print(f"  f-string 默认   = {c}       ← 走 __str__")
+print(f"  f-string 加 !r  = {c!r}   ← 走 __repr__")
+
+# 内置类型也是这套。datetime 的两种显示最能说明「照着能敲回代码」
+from datetime import datetime
+
+d = datetime(2026, 9, 8, 11, 17)
+print()
+print(f"  str(datetime)   = {d}          ← 人看的")
+print(f"  repr(datetime)  = {d!r}   ← 粘回代码就能重建这个对象")
+print(f"  重建后相等吗     = {d == datetime(2026, 9, 8, 11, 17)}")
+
+# ── 只写一个的话，写 __repr__ ─────────────────────────────────────
+print()
+print("  ① 只定义 __repr__ → str() 会回退去用它（反向不成立）")
+
+
+class OnlyRepr:
+    def __repr__(self):
+        return "OnlyRepr(我只有 repr)"
+
+
+class OnlyStr:
+    def __str__(self):
+        return "OnlyStr(我只有 str)"
+
+
+o1, o2 = OnlyRepr(), OnlyStr()
+print(f"    只有 __repr__: str() → {str(o1)}")
+print(f"    只有 __str__ : repr() → {repr(o2)[:38]}…  ← 没回退，还是默认那串")
+print("    所以两个只写一个，写 __repr__ 更划算。")
+
+# ── 都不写就是那串默认的鬼东西 ────────────────────────────────────
+print()
+print("  ② 两个都不定义 → 默认显示")
+
+
+class Nothing:
+    pass
+
+
+print(f"    {str(Nothing())}")
+print("    debug 时看到这种输出，就是有人没写 __repr__。")
+
+# ── 容器内部一律用 repr ──────────────────────────────────────────
+print()
+print("  ③ 容器里的元素一律按 repr 显示，不管你在外面 print")
+print(f"    print(单个)  : {c}")
+print(f"    print(列表)  : {[c, c]}")
+print("    ↑ 外面走 str，里面的元素却是 repr —— 这是故意的：")
+print(f"    {['5', 5]}  ← 必须能分出哪个是字符串，哪个是整数")
+
+print()
+print("  一句话：__str__ 回答「这东西是什么」，__repr__ 回答「这东西怎么造出来的」。")
+print("  打日志、调试一律用 !r；给用户看的正式输出不用。")
