@@ -190,6 +190,69 @@ print("    @tool 装饰器      → 打包进 HTTP 请求发给模型，要算 i
 print("      出处：demos/chapter1/01_single_tool.py:133 get_weather 的 docstring")
 print("    注意 @tool 读的是【函数身上】那份，跟模块的那份没关系。")
 
+# ── ③-6 inspect.getdoc() 到底「洗」掉了什么 ────────────────────────
+# ③-4 顺手用过 getdoc，这里把它洗掉的东西逐字符显示出来。
+# 出处：@tool 发给模型的是洗净版，help() 显示的也是洗净版。
+print()
+print("  ③-6 inspect.getdoc() 洗掉了什么（空格显示成 ·，换行显示成 ↵）")
+
+
+def get_weather(city: str) -> str:
+    """获取指定城市的实时天气。
+
+    参数:
+        city: 城市名，比如 北京
+    """
+    return f"{city} 晴"
+
+
+def _visible(s):
+    """把空白字符显形，方便肉眼数。"""
+    return s.replace(" ", "·").replace("\n", "↵\n")
+
+
+for _title, _text in [("原始 __doc__", get_weather.__doc__),
+                      ("inspect.getdoc()", inspect.getdoc(get_weather))]:
+    print(f"    【{_title}】{len(_text)} 个字符")
+    for _line in _visible(_text).split("\n"):
+        print(f"      |{_line}")
+
+_removed = len(get_weather.__doc__) - len(inspect.getdoc(get_weather))
+print(f"    共去掉 {_removed} 个字符，全是空白：")
+print("      「参数:」前的 4 格 + 「city:」8 格里的 4 格 + 末尾的 ↵ 和 4 个空格")
+
+print()
+print("    规则三条：")
+print("      1. 后续行【公共】的缩进整段剃掉 —— 这里是 4（所有非空行的最小缩进）")
+print("      2. 相对缩进保留 —— city: 原来比 参数: 深 4 格，洗完还是深 4 格")
+print("      3. 首尾的空行、空白清干净")
+
+# 同一段 docstring 嵌进类的方法里（缩进 8 格），洗净结果应该完全一样
+
+
+class Deep:
+    def get_weather(self, city: str) -> str:
+        """获取指定城市的实时天气。
+
+        参数:
+            city: 城市名，比如 北京
+        """
+
+
+print()
+print("    所以洗净结果跟【嵌套多深】无关：")
+print(f"      函数里(缩进4)  原始 {len(get_weather.__doc__)} → 洗净 "
+      f"{len(inspect.getdoc(get_weather))}")
+print(f"      方法里(缩进8)  原始 {len(Deep.get_weather.__doc__)} → 洗净 "
+      f"{len(inspect.getdoc(Deep.get_weather))}")
+print(f"      两者洗净后相等 = "
+      f"{inspect.getdoc(get_weather) == inspect.getdoc(Deep.get_weather)}")
+
+print()
+print("    想看「字符串里到底存了什么」→ 用 __doc__")
+print("    想显示给人看 / 发给模型      → 用 inspect.getdoc()")
+print("    help() 内部用的就是 getdoc，不然终端里的参数说明会莫名往右偏。")
+
 # ══════════════════════════════════════════════════════════════════════
 print()
 print("═" * 62)
