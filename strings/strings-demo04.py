@@ -1,6 +1,6 @@
 """注释 vs docstring：看着都是说明，性质完全不同。
 
-    python3 strings/strings-demo03.py
+    python3 strings/strings-demo04.py
 
 拆自 01_strings.py 的第 ③ 节。
 """
